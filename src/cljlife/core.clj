@@ -11,6 +11,7 @@
 ;;        pack!
 ;;        show!)))
 
+(declare next-item live-neighbors neighbors)
 
 (defn next-state [current-state]
   (map-indexed (fn [row-number row]
