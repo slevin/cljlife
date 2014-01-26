@@ -2,8 +2,8 @@
   (:require [clojure.test :refer :all]
             [cljlife.core :refer :all]))
 
-(def o \space)
-(def x \*)
+;(def o \space)
+;(def x \*)
 (def ooo [o o o])
 (def xoo [x o o])
 (def oxo [o x o])
