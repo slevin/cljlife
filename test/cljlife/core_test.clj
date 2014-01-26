@@ -67,4 +67,8 @@
 (deftest print-test
   (testing "creates valid ascii representation"
     (is (= (state-string [oxo oxo xox]) " * \n * \n* *"))))
+
+(deftest fail-test
+  (is (= 1 0)))
+
 ; test to reject invalid shapes
