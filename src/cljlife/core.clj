@@ -54,9 +54,30 @@
 
 
 
-;; (def main-state (ref nil))
 
-;; (def load-starting-state
-;;   (ref-set main-state
-;;            [[\space \*]]))
-;; (defn -main)
+;; main
+;;  read in starting state
+;;  print starting state
+;;  while true
+;;   readln
+;;   set next state
+;;   print it
+
+(def main-state (ref nil))
+
+(defn load-starting-state []
+  (dosync
+   (ref-set main-state
+            [[o x o]
+             [o x o]
+             [o x o]])))
+
+(defn -main
+  [& args]
+  (load-starting-state)
+  (println (state-string @main-state))
+  (doseq [line (line-seq (java.io.BufferedReader. *in*))]
+    (dosync
+     (ref-set main-state (next-state @main-state)))
+    (println (state-string @main-state))))
+
