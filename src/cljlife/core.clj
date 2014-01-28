@@ -1,15 +1,9 @@
 (ns cljlife.core
-  (:use seesaw.core)
+  (:import (java.awt Graphics))
+  (:use seesaw.core seesaw.color seesaw.graphics)
+  (:require [clojure.math.numeric-tower :refer [floor]])
   (:gen-class))
 
-;; (defn -main
-;;   [& args]
-;;   (invoke-later
-;;    (-> (frame :title "Hello",
-;;               :content "Hello, seesaw",
-;;               :on-close :exit)
-;;        pack!
-;;        show!)))
 
 (declare next-item live-neighbors neighbors)
 (def o \space)
@@ -72,12 +66,69 @@
              [o x o]
              [o x o]])))
 
-(defn -main
-  [& args]
-  (load-starting-state)
+(defn run-ascii-loop []
   (println (state-string @main-state))
   (doseq [line (line-seq (java.io.BufferedReader. *in*))]
     (dosync
      (ref-set main-state (next-state @main-state)))
     (println (state-string @main-state))))
 
+
+(def gap 2)
+
+(defn state-to-coords [state width height]
+  (let [rowcount (count state)
+        rowheight (floor (/ height rowcount))]
+    (map-indexed (fn [rownumber row]
+                   (let [colcount (count row)
+                         colwidth (floor (/ width colcount))
+                         y (+ (* gap rownumber) (* rowheight rownumber))]
+                     (map-indexed (fn [colnumber col]
+                                    (let [x (+ (* gap colnumber) (* colwidth colnumber))]
+                                      [x y colwidth rowheight]))
+                                  row)))
+                 state)))
+
+(defn fn-fillRect [g x y w h]
+  (.fillRect g x y w h))
+
+(defn paint-coords [g coords]
+  (.setColor g (color 255 255 255))
+  (doseq [row coords]
+    (doseq [col row]
+      ;; apply col values to java call requires
+      ;; a fn, which the java interop doesn't supprt directly
+      (apply (fn [g x y w h]
+               (.fillRect g x y w h)) g col))))
+
+
+(defn paint-board [c g]
+  (let [w (.getWidth c)
+        h (.getHeight c)
+        coords (state-to-coords @main-state w h)]
+    (paint-coords g coords)))
+
+
+(defn run-gui []
+  (invoke-later
+   (-> (frame :title "Life"
+              :content (border-panel :hgap 5 :vgap 5 :border 5
+                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board)))
+       pack!
+       show!)))
+
+(defn -main
+  [& args]
+  (load-starting-state)
+;;  (run-ascii-loop))
+  (run-gui))
+
+
+;; (defn -main
+;;   [& args]
+;;   (invoke-later
+;;    (-> (frame :title "Hello",
+;;               :content "Hello, seesaw",
+;;               :on-close :exit)
+;;        pack!
+;;        show!)))
