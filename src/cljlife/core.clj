@@ -76,6 +76,10 @@
 
 (def gap 2)
 
+(defn color-from-state [state-item]
+  (cond (= state-item x) (color 0 0 0)
+        (= state-item o) (color 255 255 255)))
+
 (defn state-to-coords [state width height]
   (let [rowcount (count state)
         rowheight (floor (/ height rowcount))]
@@ -85,7 +89,7 @@
                          y (+ (* gap rownumber) (* rowheight rownumber))]
                      (map-indexed (fn [colnumber col]
                                     (let [x (+ (* gap colnumber) (* colwidth colnumber))]
-                                      [x y colwidth rowheight]))
+                                      [(color-from-state col) x y colwidth rowheight]))
                                   row)))
                  state)))
 
@@ -96,10 +100,11 @@
   (.setColor g (color 255 255 255))
   (doseq [row coords]
     (doseq [col row]
+      (.setColor g (first col))
       ;; apply col values to java call requires
       ;; a fn, which the java interop doesn't supprt directly
       (apply (fn [g x y w h]
-               (.fillRect g x y w h)) g col))))
+               (.fillRect g x y w h)) g (rest col)))))
 
 
 (defn paint-board [c g]
