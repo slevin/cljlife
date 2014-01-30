@@ -114,11 +114,24 @@
     (paint-coords g coords)))
 
 
+(defn update-gui []
+    (dosync
+     (ref-set main-state (next-state @main-state)))
+    (paint-board))
+
+(defn handle-gui-state-update [event]
+  (dosync
+   (ref-set main-state (next-state @main-state)))
+  (-> (to-frame event)
+      (select [:#canvas])
+      repaint!))
+
 (defn run-gui []
   (invoke-later
    (-> (frame :title "Life"
               :content (border-panel :hgap 5 :vgap 5 :border 5
-                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board)))
+                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board)
+                                     :south (horizontal-panel :items [(action :name "next phase" :handler handle-gui-state-update)])))
        pack!
        show!)))
 
