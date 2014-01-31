@@ -66,6 +66,18 @@
              [o x o]
              [o x o]])))
 
+
+;; adds or removes extra rows and columns, keeping old stuff if possible
+(defn update-state-size [state size]
+  ;get current size by padding or removing rows
+  (let [adjusted-state (cond (<= size (count state)) (take size state)
+                             :else (concat state (repeat (- size (count state)) [])))]
+    (map (fn [row]
+           (cond (<= size (count row)) (take size row)
+                 :else (concat row (repeat (- size (count row)) o))))
+         adjusted-state)))
+
+
 (defn run-ascii-loop []
   (println (state-string @main-state))
   (doseq [line (line-seq (java.io.BufferedReader. *in*))]
@@ -126,12 +138,38 @@
       (select [:#canvas])
       repaint!))
 
+(defn handle-field-size-update [event]
+  (let [slide (to-widget event)
+        window (to-root slide)
+        new-size (value slide)]
+    ;; events triggered before its fully configured so I ignore those
+    ;; until its ready
+    (when-not (or (nil? new-size) (nil? window))
+      (dosync
+       (ref-set main-state (update-state-size @main-state new-size)))
+      (-> (to-frame slide)
+          (select [:#canvas])
+          repaint!))))
+
+(defn slider-widget []
+  (slider
+   :id :size-slider
+   :orientation :horizontal
+   :value 3
+   :min 3
+   :max 20
+   :snap-to-ticks? true
+   :paint-ticks? true
+;;   :text "Field Dimension"
+   :listen [:change handle-field-size-update]))
+
+
 (defn run-gui []
   (invoke-later
    (-> (frame :title "Life"
               :content (border-panel :hgap 5 :vgap 5 :border 5
                                      :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board)
-                                     :south (horizontal-panel :items [(action :name "next phase" :handler handle-gui-state-update)])))
+                                     :south (horizontal-panel :items [(action :name "next phase" :handler handle-gui-state-update) (slider-widget)])))
        pack!
        show!)))
 
@@ -142,11 +180,3 @@
   (run-gui))
 
 
-;; (defn -main
-;;   [& args]
-;;   (invoke-later
-;;    (-> (frame :title "Hello",
-;;               :content "Hello, seesaw",
-;;               :on-close :exit)
-;;        pack!
-;;        show!)))
