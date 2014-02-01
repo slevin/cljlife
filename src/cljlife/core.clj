@@ -94,13 +94,13 @@
 
 (defn state-to-coords [state width height]
   (let [rowcount (count state)
-        rowheight (floor (- (/ height rowcount) gap))]
+        rowheight (- (/ height rowcount) gap)]
     (map-indexed (fn [rownumber row]
                    (let [colcount (count row)
-                         colwidth (floor (- (/ width colcount) gap))
-                         y (+ (* gap rownumber) (* rowheight rownumber))]
+                         colwidth (- (/ width colcount) gap)
+                         y (+ (+ (* gap rownumber) (* rowheight rownumber)) (/ gap 2))]
                      (map-indexed (fn [colnumber col]
-                                    (let [x (+ (* gap colnumber) (* colwidth colnumber))]
+                                    (let [x (+ (+ (* gap colnumber) (* colwidth colnumber)) (/ gap 2))]
                                       [(color-from-state col) x y colwidth rowheight]))
                                   row)))
                  state)))
