@@ -4,6 +4,7 @@
   (:require [clojure.math.numeric-tower :refer [floor]])
   (:gen-class))
 
+(use '[seesaw.mouse :only (location)])
 
 (declare next-item live-neighbors neighbors)
 (def o \space)
@@ -105,6 +106,29 @@
                                   row)))
                  state)))
 
+(defn coords-to-state-index [coord-x coord-y width height state]
+  (let [rowcount (count state)
+        rowheight (- (/ height rowcount) gap)
+        rowindex (floor (/ coord-y rowheight))
+        row (nth state rowindex)
+        colcount (count row)
+        colwidth (- (/ width colcount) gap)
+        colindex (floor (/ coord-x colwidth))]
+    [colindex rowindex]))
+
+(defn toggled-state [colindex rowindex state]
+  (map-indexed (fn [map-row-index row]
+                 (if (= map-row-index rowindex)
+                   (map-indexed (fn [map-col-index col]
+                                  (if (= map-col-index colindex)
+                                    (if (= col x)
+                                      o x)
+                                    col))
+                                row)
+                   row))
+               state))
+
+
 (defn fn-fillRect [g x y w h]
   (.fillRect g x y w h))
 
@@ -163,12 +187,22 @@
 ;;   :text "Field Dimension"
    :listen [:change handle-field-size-update]))
 
+(defn board-clicked [event]
+  (let [[x y] (location event)
+        canvas (to-widget event)
+        w (.getWidth canvas)
+        h (.getHeight canvas)
+        [col-index row-index] (coords-to-state-index x y w h @main-state)]
+    (dosync
+     (ref-set main-state (toggled-state col-index row-index @main-state)))
+    (repaint! canvas)))
+
 
 (defn run-gui []
   (invoke-later
    (-> (frame :title "Life"
               :content (border-panel :hgap 5 :vgap 5 :border 5
-                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board)
+                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board :listen [:mouse-clicked board-clicked])
                                      :south (horizontal-panel :items [(action :name "next phase" :handler handle-gui-state-update) (slider-widget)])))
        pack!
        show!)))
