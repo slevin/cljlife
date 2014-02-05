@@ -68,4 +68,15 @@
   (testing "creates valid ascii representation"
     (is (= (state-string [oxo oxo xox]) " * \n * \n* *"))))
 
-; test to reject invalid shapes
+(deftest coords-to-state-test
+  (testing "mouse position finds correct square in small"
+    (let [threeXthree (repeat 3 (repeat 3 o))
+          width 300
+          height 300]
+      (is (= [0 0] (coords-to-state-index 1 1 width height threeXthree)))
+      (is (= [0 0] (coords-to-state-index 97 97 width height threeXthree)))
+      (is (= [1 1] (coords-to-state-index 100 100 width height threeXthree)))
+      (is (= [1 1] (coords-to-state-index 197 197 width height threeXthree)))
+      (is (= [2 2] (coords-to-state-index 200 200 width height threeXthree)))
+      (is (= [2 2] (coords-to-state-index 297 297 width height threeXthree))))))
+

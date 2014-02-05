@@ -108,13 +108,14 @@
 
 (defn coords-to-state-index [coord-x coord-y width height state]
   (let [rowcount (count state)
-        rowheight (- (/ height rowcount) gap)
+        rowheight (/ height rowcount)
         rowindex (floor (/ coord-y rowheight))
         row (nth state rowindex)
         colcount (count row)
-        colwidth (- (/ width colcount) gap)
+        colwidth (/ width colcount)
         colindex (floor (/ coord-x colwidth))]
     [colindex rowindex]))
+
 
 (defn toggled-state [colindex rowindex state]
   (map-indexed (fn [map-row-index row]
@@ -127,6 +128,7 @@
                                 row)
                    row))
                state))
+
 
 
 (defn fn-fillRect [g x y w h]
