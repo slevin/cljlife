@@ -50,15 +50,12 @@
 
 
 
-;; main
-;;  read in starting state
-;;  print starting state
-;;  while true
-;;   readln
-;;   set next state
-;;   print it
-
+;; store the current board
 (def main-state (ref nil))
+
+;; current status of mouse hover
+(def hover-xy (ref nil))
+
 
 (defn load-starting-state []
   (dosync
@@ -89,9 +86,12 @@
 
 (def gap 2)
 
-(defn color-from-state [state-item]
-  (cond (= state-item x) (color 0 0 0)
-        (= state-item o) (color 255 255 255)))
+(defn color-from-state [state-item col row]
+  (if (= [col row] @hover-xy)
+    (cond (= state-item x) (color 50 50 50)
+          (= state-item o) (color 225 225 225))
+    (cond (= state-item x) (color 0 0 0)
+          (= state-item o) (color 255 255 255))))
 
 (defn state-to-coords [state width height]
   (let [rowcount (count state)
@@ -102,7 +102,7 @@
                          y (+ (+ (* gap rownumber) (* rowheight rownumber)) (/ gap 2))]
                      (map-indexed (fn [colnumber col]
                                     (let [x (+ (+ (* gap colnumber) (* colwidth colnumber)) (/ gap 2))]
-                                      [(color-from-state col) x y colwidth rowheight]))
+                                      [(color-from-state col colnumber rownumber) x y colwidth rowheight]))
                                   row)))
                  state)))
 
@@ -199,11 +199,41 @@
      (ref-set main-state (toggled-state col-index row-index @main-state)))
     (repaint! canvas)))
 
+(defn update-hover-to [x y]
+  (dosync
+   (ref-set hover-xy [x y])))
+
+(defn clear-hover []
+  (dosync
+   (ref-set hover-xy nil)))
+
+(defn mouse-moved [event]
+  (let [[x y] (location event)
+        canvas (to-widget event)
+        w (.getWidth canvas)
+        h (.getHeight canvas)
+        [new-col-index new-row-index] (coords-to-state-index x y w h @main-state)]
+    (if (nil? @hover-xy) 
+      (do
+        (update-hover-to new-col-index new-row-index) 
+        (repaint! canvas))
+      (let [[old-col-index old-row-index] @hover-xy]
+        (if-not (and (= old-col-index new-col-index) 
+                     (= old-row-index new-row-index))
+          (do
+            (update-hover-to new-col-index new-row-index)
+            (repaint! canvas)))))))
+        
+(defn mouse-exited [event]
+  (let [canvas (to-widget event)]
+    (clear-hover)
+    (repaint! canvas)))
+
 (defn run-gui []
   (invoke-later
    (-> (frame :title "Life"
               :content (border-panel :hgap 5 :vgap 5 :border 5
-                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board :listen [:mouse-released board-clicked])
+                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board :listen [:mouse-released board-clicked :mouse-moved mouse-moved :mouse-exited mouse-exited])
                                      :south (horizontal-panel :items [(action :name "next phase" :handler handle-gui-state-update) (slider-widget)])))
        pack!
        show!)))
