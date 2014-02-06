@@ -1,6 +1,6 @@
 (ns cljlife.core
-  (:import (java.awt Graphics))
-  (:use seesaw.core seesaw.color seesaw.graphics)
+  (:import (java.awt Graphics) (java.util Date))
+  (:use seesaw.core seesaw.color seesaw.graphics seesaw.dev)
   (:require [clojure.math.numeric-tower :refer [floor]])
   (:gen-class))
 
@@ -199,12 +199,11 @@
      (ref-set main-state (toggled-state col-index row-index @main-state)))
     (repaint! canvas)))
 
-
 (defn run-gui []
   (invoke-later
    (-> (frame :title "Life"
               :content (border-panel :hgap 5 :vgap 5 :border 5
-                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board :listen [:mouse-clicked board-clicked])
+                                     :center (canvas :id :canvas :background "#BBBBDD" :paint paint-board :listen [:mouse-released board-clicked])
                                      :south (horizontal-panel :items [(action :name "next phase" :handler handle-gui-state-update) (slider-widget)])))
        pack!
        show!)))
@@ -214,5 +213,4 @@
   (load-starting-state)
 ;;  (run-ascii-loop))
   (run-gui))
-
 
